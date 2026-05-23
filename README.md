@@ -4,7 +4,7 @@ A simple task management web app built with FastAPI and plain HTML/JS. Users can
 
 ## Tech Stack
 
-- **Backend**: FastAPI, SQLAlchemy, SQLite (easily swappable to PostgreSQL)
+- **Backend**: FastAPI, SQLAlchemy, SQLite 
 - **Auth**: JWT via `python-jose`, password hashing via `passlib[bcrypt]`
 - **Frontend**: Plain HTML + CSS + JavaScript (no build step needed)
 - **Tests**: pytest + FastAPI's TestClient
@@ -53,7 +53,7 @@ Never commit `.env` — it's in `.gitignore`.
 
 ## Running Locally
 
-### Option 1 — Plain Python (quickest)
+### Option 1 — Plain Python 
 
 ```bash
 cd backend
@@ -124,7 +124,6 @@ All tests use an isolated SQLite database that's created and torn down automatic
    ```
 5. Add environment variables (`SECRET_KEY`, `DATABASE_URL`, etc.) in the Render dashboard.
 
-> **Tip**: For a persistent database on Render's free tier, set `DATABASE_URL` to a PostgreSQL connection string (Render provides a free Postgres instance). SQLAlchemy will handle the rest without code changes.
 
 ---
 
