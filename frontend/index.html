@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Task Manager</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f4f6f8;
+      --surface: #ffffff;
+      --border: #dde1e7;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --danger: #dc2626;
+      --danger-hover: #b91c1c;
+      --success: #16a34a;
+      --text: #1e293b;
+      --muted: #64748b;
+      --radius: 8px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .nav-brand { font-size: 1.1rem; font-weight: 700; color: var(--primary); }
+    .nav-user { display: flex; align-items: center; gap: 12px; font-size: 0.875rem; color: var(--muted); }
+    #btn-logout {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 5px 12px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: var(--muted);
+      transition: border-color 0.15s, color 0.15s;
+    }
+    #btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* ── Layout ── */
+    .container { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
+
+    /* ── Auth Card ── */
+    .auth-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 56px);
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 36px 32px;
+      width: 100%;
+      max-width: 400px;
+    }
+    .card h2 { font-size: 1.25rem; margin-bottom: 24px; }
+
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .form-group input, .form-group textarea {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      color: var(--text);
+      transition: border-color 0.15s, box-shadow 0.15s;
+      background: var(--bg);
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+      background: #fff;
+    }
+    .form-group textarea { resize: vertical; min-height: 72px; font-family: inherit; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 9px 18px;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-block { width: 100%; justify-content: center; }
+    .btn-sm { padding: 5px 10px; font-size: 0.78rem; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-danger:hover { background: var(--danger-hover); }
+    .btn-ghost {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover { border-color: var(--primary); color: var(--primary); }
+    .btn-success { background: var(--success); color: #fff; }
+
+    .switch-link { text-align: center; margin-top: 20px; font-size: 0.85rem; color: var(--muted); }
+    .switch-link a { color: var(--primary); cursor: pointer; text-decoration: none; font-weight: 600; }
+    .switch-link a:hover { text-decoration: underline; }
+
+    /* ── Alert ── */
+    .alert {
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+    .alert.error { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; display: block; }
+    .alert.success { background: #f0fdf4; border: 1px solid #86efac; color: #166534; display: block; }
+
+    /* ── Task area ── */
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .create-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+    }
+    .create-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+    .filter-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all 0.15s;
+    }
+    .filter-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    .task-list { display: flex; flex-direction: column; gap: 10px; }
+
+    .task-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      transition: box-shadow 0.15s;
+    }
+    .task-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+    .task-item.done { opacity: 0.65; }
+
+    .task-check {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .task-check.checked { background: var(--success); border-color: var(--success); }
+    .task-check.checked::after { content: "✓"; color: #fff; font-size: 11px; font-weight: 700; }
+    .task-check:not(.checked):hover { border-color: var(--success); }
+
+    .task-body { flex: 1; min-width: 0; }
+    .task-title { font-weight: 600; font-size: 0.9rem; word-break: break-word; }
+    .task-title.done { text-decoration: line-through; color: var(--muted); }
+    .task-desc { font-size: 0.8rem; color: var(--muted); margin-top: 3px; word-break: break-word; }
+    .task-meta { font-size: 0.72rem; color: #94a3b8; margin-top: 6px; }
+
+    .task-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    .empty-state { text-align: center; padding: 48px 0; color: var(--muted); }
+    .empty-state p { font-size: 0.9rem; margin-top: 8px; }
+
+    /* ── Pagination ── */
+    .pagination { display: flex; gap: 8px; justify-content: center; margin-top: 24px; align-items: center; }
+    .page-info { font-size: 0.8rem; color: var(--muted); }
+
+    /* ── Hidden ── */
+    .hidden { display: none !important; }
+
+    @media (max-width: 480px) {
+      .card { padding: 28px 20px; }
+      .task-actions { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Nav -->
+<nav>
+  <span class="nav-brand">✅ TaskManager</span>
+  <div class="nav-user hidden" id="nav-user-area">
+    <span id="nav-username"></span>
+    <button id="btn-logout">Logout</button>
+  </div>
+</nav>
+
+<!-- Auth views -->
+<div class="auth-wrap" id="auth-wrap">
+  <!-- Login -->
+  <div class="card" id="view-login">
+    <h2>Welcome back</h2>
+    <div class="alert" id="login-alert"></div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="login-username" placeholder="your username" autocomplete="username" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••" autocomplete="current-password" />
+    </div>
+    <button class="btn btn-primary btn-block" id="btn-login">Sign in</button>
+    <div class="switch-link">No account? <a id="go-register">Register here</a></div>
+  </div>
+
+  <!-- Register -->
+  <div class="card hidden" id="view-register">
+    <h2>Create account</h2>
+    <div class="alert" id="register-alert"></div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="reg-username" placeholder="pick a username" autocomplete="username" />
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input type="email" id="reg-email" placeholder="you@example.com" autocomplete="email" />
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="reg-password" placeholder="min. 6 characters" autocomplete="new-password" />
+    </div>
+    <button class="btn btn-primary btn-block" id="btn-register">Create account</button>
+    <div class="switch-link">Already have one? <a id="go-login">Sign in</a></div>
+  </div>
+</div>
+
+<!-- Tasks view -->
+<div class="container hidden" id="view-tasks">
+  <div class="create-card">
+    <h3>New task</h3>
+    <div class="alert" id="task-alert"></div>
+    <div class="form-group">
+      <label>Title</label>
+      <input type="text" id="task-title" placeholder="What needs to be done?" />
+    </div>
+    <div class="form-group">
+      <label>Description <span style="font-weight:400;text-transform:none">(optional)</span></label>
+      <textarea id="task-desc" placeholder="Add some detail..."></textarea>
+    </div>
+    <button class="btn btn-primary" id="btn-create-task">Add task</button>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="false">Pending</button>
+    <button class="filter-btn" data-filter="true">Completed</button>
+  </div>
+
+  <div class="task-list" id="task-list">
+    <div class="empty-state">
+      <div style="font-size:2rem">📋</div>
+      <p>No tasks yet. Add one above!</p>
+    </div>
+  </div>
+
+  <div class="pagination hidden" id="pagination">
+    <button class="btn btn-ghost btn-sm" id="btn-prev">← Prev</button>
+    <span class="page-info" id="page-info"></span>
+    <button class="btn btn-ghost btn-sm" id="btn-next">Next →</button>
+  </div>
+</div>
+
+<script>
+  // ── Config ──────────────────────────────────────────────────────────────
+  const API = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+    ? "http://localhost:8000"
+    : "";          // same origin when served from FastAPI
+
+  // ── State ────────────────────────────────────────────────────────────────
+  let token = localStorage.getItem("tm_token") || null;
+  let username = localStorage.getItem("tm_user") || null;
+  let currentFilter = "all";
+  let currentPage = 1;
+  const PAGE_SIZE = 10;
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+  async function apiFetch(path, options = {}) {
+    const headers = { "Content-Type": "application/json", ...(options.headers || {}) };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(API + path, { ...options, headers });
+    const data = res.status === 204 ? null : await res.json().catch(() => null);
+    return { ok: res.ok, status: res.status, data };
+  }
+
+  function showAlert(id, msg, type = "error") {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = `alert ${type}`;
+  }
+  function clearAlert(id) {
+    const el = document.getElementById(id);
+    el.className = "alert";
+    el.textContent = "";
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return "";
+    return new Date(iso).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+  }
+
+  // ── Routing ──────────────────────────────────────────────────────────────
+  function showTasksView() {
+    document.getElementById("auth-wrap").classList.add("hidden");
+    document.getElementById("view-tasks").classList.remove("hidden");
+    document.getElementById("nav-user-area").classList.remove("hidden");
+    document.getElementById("nav-username").textContent = username;
+    loadTasks();
+  }
+
+  function showAuthView(which = "login") {
+    document.getElementById("auth-wrap").classList.remove("hidden");
+    document.getElementById("view-tasks").classList.add("hidden");
+    document.getElementById("nav-user-area").classList.add("hidden");
+    if (which === "login") {
+      document.getElementById("view-login").classList.remove("hidden");
+      document.getElementById("view-register").classList.add("hidden");
+    } else {
+      document.getElementById("view-login").classList.add("hidden");
+      document.getElementById("view-register").classList.remove("hidden");
+    }
+  }
+
+  // ── Auth ─────────────────────────────────────────────────────────────────
+  document.getElementById("btn-login").addEventListener("click", async () => {
+    clearAlert("login-alert");
+    const u = document.getElementById("login-username").value.trim();
+    const p = document.getElementById("login-password").value;
+    if (!u || !p) return showAlert("login-alert", "Please fill in all fields.");
+
+    const { ok, data } = await apiFetch("/login", {
+      method: "POST",
+      body: JSON.stringify({ username: u, password: p }),
+    });
+    if (!ok) return showAlert("login-alert", data?.detail || "Login failed.");
+
+    token = data.access_token;
+    username = u;
+    localStorage.setItem("tm_token", token);
+    localStorage.setItem("tm_user", username);
+    showTasksView();
+  });
+
+  document.getElementById("btn-register").addEventListener("click", async () => {
+    clearAlert("register-alert");
+    const u = document.getElementById("reg-username").value.trim();
+    const e = document.getElementById("reg-email").value.trim();
+    const p = document.getElementById("reg-password").value;
+    if (!u || !e || !p) return showAlert("register-alert", "Please fill in all fields.");
+
+    const { ok, data } = await apiFetch("/register", {
+      method: "POST",
+      body: JSON.stringify({ username: u, email: e, password: p }),
+    });
+    if (!ok) return showAlert("register-alert", data?.detail || "Registration failed.");
+
+    showAlert("register-alert", "Account created! Signing you in…", "success");
+    // auto-login
+    const login = await apiFetch("/login", {
+      method: "POST",
+      body: JSON.stringify({ username: u, password: p }),
+    });
+    if (login.ok) {
+      token = login.data.access_token;
+      username = u;
+      localStorage.setItem("tm_token", token);
+      localStorage.setItem("tm_user", username);
+      setTimeout(showTasksView, 600);
+    }
+  });
+
+  document.getElementById("btn-logout").addEventListener("click", () => {
+    token = null;
+    username = null;
+    localStorage.removeItem("tm_token");
+    localStorage.removeItem("tm_user");
+    showAuthView("login");
+  });
+
+  document.getElementById("go-register").addEventListener("click", () => showAuthView("register"));
+  document.getElementById("go-login").addEventListener("click", () => showAuthView("login"));
+
+  // Enter key support for auth forms
+  ["login-username", "login-password"].forEach(id =>
+    document.getElementById(id).addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("btn-login").click(); })
+  );
+  ["reg-username", "reg-email", "reg-password"].forEach(id =>
+    document.getElementById(id).addEventListener("keydown", e => { if (e.key === "Enter") document.getElementById("btn-register").click(); })
+  );
+
+  // ── Tasks ─────────────────────────────────────────────────────────────────
+  async function loadTasks() {
+    let path = `/tasks?page=${currentPage}&page_size=${PAGE_SIZE}`;
+    if (currentFilter !== "all") path += `&completed=${currentFilter}`;
+
+    const { ok, data } = await apiFetch(path);
+    if (!ok) {
+      if (data?.detail === "Could not validate credentials") {
+        token = null; localStorage.removeItem("tm_token"); showAuthView(); return;
+      }
+      return;
+    }
+
+    renderTasks(data.tasks);
+
+    // Pagination
+    const totalPages = Math.ceil(data.total / PAGE_SIZE);
+    const pag = document.getElementById("pagination");
+    if (totalPages > 1) {
+      pag.classList.remove("hidden");
+      document.getElementById("page-info").textContent = `Page ${data.page} of ${totalPages}`;
+      document.getElementById("btn-prev").disabled = currentPage === 1;
+      document.getElementById("btn-next").disabled = currentPage >= totalPages;
+    } else {
+      pag.classList.add("hidden");
+    }
+  }
+
+  function renderTasks(tasks) {
+    const list = document.getElementById("task-list");
+    if (tasks.length === 0) {
+      const labels = { all: "No tasks yet. Add one above!", false: "No pending tasks.", true: "No completed tasks." };
+      list.innerHTML = `<div class="empty-state"><div style="font-size:2rem">📋</div><p>${labels[currentFilter]}</p></div>`;
+      return;
+    }
+    list.innerHTML = tasks.map(t => `
+      <div class="task-item${t.completed ? " done" : ""}" data-id="${t.id}">
+        <div class="task-check${t.completed ? " checked" : ""}" onclick="toggleTask(${t.id}, ${!t.completed})"></div>
+        <div class="task-body">
+          <div class="task-title${t.completed ? " done" : ""}">${escHtml(t.title)}</div>
+          ${t.description ? `<div class="task-desc">${escHtml(t.description)}</div>` : ""}
+          <div class="task-meta">Added ${fmtDate(t.created_at)}${t.updated_at ? " · Updated " + fmtDate(t.updated_at) : ""}</div>
+        </div>
+        <div class="task-actions">
+          <button class="btn btn-danger btn-sm" onclick="deleteTask(${t.id})">Delete</button>
+        </div>
+      </div>
+    `).join("");
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  }
+
+  document.getElementById("btn-create-task").addEventListener("click", async () => {
+    clearAlert("task-alert");
+    const title = document.getElementById("task-title").value.trim();
+    const desc = document.getElementById("task-desc").value.trim();
+    if (!title) return showAlert("task-alert", "Title is required.");
+
+    const { ok, data } = await apiFetch("/tasks", {
+      method: "POST",
+      body: JSON.stringify({ title, description: desc || null }),
+    });
+    if (!ok) return showAlert("task-alert", data?.detail || "Could not create task.");
+
+    document.getElementById("task-title").value = "";
+    document.getElementById("task-desc").value = "";
+    currentPage = 1;
+    loadTasks();
+  });
+
+  document.getElementById("task-title").addEventListener("keydown", e => {
+    if (e.key === "Enter") document.getElementById("btn-create-task").click();
+  });
+
+  async function toggleTask(id, completed) {
+    const { ok } = await apiFetch(`/tasks/${id}`, {
+      method: "PUT",
+      body: JSON.stringify({ completed }),
+    });
+    if (ok) loadTasks();
+  }
+
+  async function deleteTask(id) {
+    if (!confirm("Delete this task?")) return;
+    const { ok } = await apiFetch(`/tasks/${id}`, { method: "DELETE" });
+    if (ok) loadTasks();
+  }
+
+  // Filter buttons
+  document.querySelectorAll(".filter-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      currentFilter = btn.dataset.filter;
+      currentPage = 1;
+      loadTasks();
+    });
+  });
+
+  // Pagination
+  document.getElementById("btn-prev").addEventListener("click", () => { currentPage--; loadTasks(); });
+  document.getElementById("btn-next").addEventListener("click", () => { currentPage++; loadTasks(); });
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  if (token) {
+    showTasksView();
+  } else {
+    showAuthView("login");
+  }
+</script>
+</body>
+</html>
